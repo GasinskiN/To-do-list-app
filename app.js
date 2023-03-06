@@ -1,8 +1,11 @@
 const express = require("express");
 const ejs = require("ejs");
+const date = require(__dirname + "/date.js");
 const app = express();
-const path = __dirname + "/list.ejs";
-let itemArray = ["example task"];
+
+const pathList = __dirname + "/view/list.ejs";
+const pathAbout = __dirname + "/view/about.ejs";
+const itemArray = ["example task"];
 
 app.use(express.static(__dirname + '/public/'));
 
@@ -10,17 +13,18 @@ app.use(express.urlencoded({extended: true}));
 
 
 app.get("/", function(req, res){
-    let today = new Date();
-    let options = {
-        weekday: "long",
-        day: "numeric",
-        month: "long"
-    };
-    let todayDate = today.toLocaleDateString("en-US", options)
-    ejs.renderFile(path, {kindOfDay: todayDate, newItems: itemArray}, function(err, data){
+    
+    let todayDate = date.getDate();
+    ejs.renderFile(pathList, {currentDate: todayDate, newItems: itemArray}, function(err, data){
         res.send(data);
     
     });
+})
+
+app.get("/about", function(req, res){
+    ejs.renderFile(pathAbout,function(err, data){
+        res.send(data);
+    })
 })
 
 app.post("/", function(req, res){
