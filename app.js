@@ -1,5 +1,7 @@
 const express = require("express");
 const ejs = require("ejs");
+const mongoose = require("mongoose");
+const Task = require("./Task");
 const date = require(__dirname + "/date.js");
 const app = express();
 
@@ -10,6 +12,8 @@ const itemArray = ["example task"];
 app.use(express.static(__dirname + '/public/'));
 
 app.use(express.urlencoded({extended: true}));
+
+
 
 
 app.get("/", function(req, res){
