@@ -2,6 +2,7 @@ const express = require("express");
 const ejs = require("ejs");
 const mongoose = require("mongoose");
 const Task = require(__dirname + "/Task");
+const List = require(__dirname + "/List");
 const date = require(__dirname + "/date.js");
 const app = express();
 
@@ -20,7 +21,7 @@ const task2 = new Task({
     toDo: "Click the plus to add a new task"
 });
 const task3 = new Task({
-    toDo: "<--- this is a button to delete a task "
+    toDo: "<--- this is a delete button "
 });
 
 
@@ -33,6 +34,7 @@ async function main(){
     await mongoose.connect("mongodb://127.0.0.1:27017/toDoDB");
     
     app.get("/", async function(req, res){
+
         // get tasks array and check if it is empty
         let tasks = await Task.find();
         if (tasks.length === 0){
@@ -41,6 +43,7 @@ async function main(){
             .then(() => console.log("input into a list was succesfull"))
             .catch((err) => console.log(err.message));  
         }
+
         // get tasks array once again in case it has changed
         tasks = await Task.find();
         // get date
@@ -77,6 +80,31 @@ async function main(){
         }
         res.redirect("/");
     
+    })
+
+    app.get("/:userMadeList", async function(req, res){
+        // get name of path
+        const nameOfUserList = req.params.userMadeList;
+        // check if list exists
+        let myList = await List.findOne({name: nameOfUserList})
+        if (!myList){
+            // if the list doesn't exist create it with some default values
+            try { 
+                const list = await List.create({
+                    name: nameOfUserList,
+                    items: [task1, task2, task3],
+                });
+                // update myList value
+                myList = list;
+            } catch (err) {
+                console.log(err.message);
+            }
+        }
+
+        ejs.renderFile(pathList, {currentDate: nameOfUserList, newItems: myList.items}, function(err, data){
+            res.send(data);
+        
+        });
     })
     
     // start server
