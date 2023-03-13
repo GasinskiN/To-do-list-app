@@ -7,7 +7,7 @@ const app = express();
 
 const pathList = __dirname + "/view/list.ejs";
 const pathAbout = __dirname + "/view/about.ejs";
-const itemArray = ["example task"];
+// const itemArray = ["example task"];
 
 app.use(express.static(__dirname + '/public/'));
 
@@ -32,33 +32,41 @@ async function main(){
     await mongoose.connect("mongodb://127.0.0.1:27017/toDoDB");
     
     app.get("/", async function(req, res){
-        
-        // let tasks = getTaskArray();
 
-        let tryout = await Task.find();
-        // let tasks = Task.find().catch((err) => console.log(err.message));
-        if (tryout.length === 0){
+        let tasks = await Task.find();
+        if (tasks.length === 0){
             Task.insertMany([task1, task2, task3])
             .then(() => console.log("input into a list was succesfull"))
             .catch((err) => console.log(err.message));  
         }
-        console.log(tryout[0]);
+        tasks = await Task.find();
         let todayDate = date.getDate();
-        ejs.renderFile(pathList, {currentDate: todayDate, newItems: tryout}, function(err, data){
+        ejs.renderFile(pathList, {currentDate: todayDate, newItems: tasks}, function(err, data){
             res.send(data);
         
         });
     })
     
     app.get("/about", function(req, res){
-        ejs.renderFile(pathAbout,function(err, data){
+        ejs.renderFile(pathAbout, function(err, data){
             res.send(data);
         })
     })
+
+    app.post("/del", async function(req, res){
+        await Task.deleteOne({_id: req.body.itemToDelete});
+        res.redirect("/");
+
+    })
     
-    app.post("/", function(req, res){
-    
-        itemArray.push(req.body.newItem);
+    app.post("/", async function(req, res){
+        try {            
+            await Task.create({
+                toDo: req.body.newItem
+            });
+        } catch (err) {
+            console.log(err.message);
+        }
         res.redirect("/");
     
     })
@@ -66,10 +74,7 @@ async function main(){
     app.listen(3000, function(){
         console.log("Server running on port 3000");
     })
+
+    // mongoose.connection.close();
 }
 
-async function getTaskArray(){
-    const tasks = await Task.find();
-    console.log(tasks);
-    return tasks;
-}
