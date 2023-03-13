@@ -13,31 +13,63 @@ app.use(express.static(__dirname + '/public/'));
 
 app.use(express.urlencoded({extended: true}));
 
+const task1 = new Task({
+    toDo: "This is a list"
+});
+const task2 = new Task({
+    toDo: "Click the plus to add a new task"
+});
+const task3 = new Task({
+    toDo: "<--- this is a button to delete a task "
+});
 
 
 
-app.get("/", function(req, res){
+
+main().catch((err) => console.log(err.message));
+
+async function main(){
+    await mongoose.connect("mongodb://127.0.0.1:27017/toDoDB");
     
-    let todayDate = date.getDate();
-    ejs.renderFile(pathList, {currentDate: todayDate, newItems: itemArray}, function(err, data){
-        res.send(data);
-    
-    });
-})
+    app.get("/", async function(req, res){
+        
+        // let tasks = getTaskArray();
 
-app.get("/about", function(req, res){
-    ejs.renderFile(pathAbout,function(err, data){
-        res.send(data);
+        let tryout = await Task.find();
+        // let tasks = Task.find().catch((err) => console.log(err.message));
+        if (tryout.length === 0){
+            Task.insertMany([task1, task2, task3])
+            .then(() => console.log("input into a list was succesfull"))
+            .catch((err) => console.log(err.message));  
+        }
+        console.log(tryout[0]);
+        let todayDate = date.getDate();
+        ejs.renderFile(pathList, {currentDate: todayDate, newItems: tryout}, function(err, data){
+            res.send(data);
+        
+        });
     })
-})
+    
+    app.get("/about", function(req, res){
+        ejs.renderFile(pathAbout,function(err, data){
+            res.send(data);
+        })
+    })
+    
+    app.post("/", function(req, res){
+    
+        itemArray.push(req.body.newItem);
+        res.redirect("/");
+    
+    })
+    
+    app.listen(3000, function(){
+        console.log("Server running on port 3000");
+    })
+}
 
-app.post("/", function(req, res){
-
-    itemArray.push(req.body.newItem);
-    res.redirect("/");
-
-})
-
-app.listen(3000, function(){
-    console.log("Server running on port 3000");
-})
+async function getTaskArray(){
+    const tasks = await Task.find();
+    console.log(tasks);
+    return tasks;
+}
