@@ -1,10 +1,10 @@
 const express = require("express");
 const ejs = require("ejs");
 const mongoose = require("mongoose");
-const { findOne } = require("./Task");
 const Task = require(__dirname + "/Task");
 const List = require(__dirname + "/List");
 const date = require(__dirname + "/date.js");
+const capitalize = require('lodash/capitalize');
 const app = express();
 
 const pathList = __dirname + "/view/list.ejs";
@@ -83,14 +83,15 @@ async function main(){
 
     })
     
-    // Add task to a list and render homepage again
+    // Add task to a list and render page again
     app.post("/", async function(req, res){
+        // get date and create new Task item with input provided by the user
         const todayDate = date.getDate();
         const newItem = await new Task({
             toDo: req.body.newItem
         });
+        // if list title is equal to todays date save new item to default Task collection
         if(req.body.list === todayDate){
-            console.log("they are the same");
             try {            
                 await newItem.save();
             } catch (err) {
@@ -98,6 +99,7 @@ async function main(){
             } finally {
                 res.redirect("/");
             }
+            // if the title is different then save to our lists collection ito subdocument items
         } else{
             try {
                 const listToAddTo = await List.findOne({name: req.body.list});
@@ -106,6 +108,7 @@ async function main(){
             } catch (error) {
                 console.log(error.message);
             } finally{
+                // redirect to the same page that is being used
                 res.redirect("/" + req.body.list);
             }
         }
@@ -113,8 +116,8 @@ async function main(){
     })
 
     app.get("/:userMadeList", async function(req, res){
-        // get name of path
-        const nameOfUserList = req.params.userMadeList;
+        // get name of path and set first letter to capital and the rest to lowercase
+        const nameOfUserList = capitalize(req.params.userMadeList);
         // check if list exists
         let myList = await List.findOne({name: nameOfUserList})
         if (!myList){
