@@ -1,6 +1,7 @@
 const express = require("express");
 const ejs = require("ejs");
 const mongoose = require("mongoose");
+const { findOne } = require("./Task");
 const Task = require(__dirname + "/Task");
 const List = require(__dirname + "/List");
 const date = require(__dirname + "/date.js");
@@ -24,9 +25,6 @@ const task3 = new Task({
     toDo: "<--- this is a delete button "
 });
 
-
-
-
 main().catch((err) => console.log(err.message));
 
 async function main(){
@@ -49,9 +47,11 @@ async function main(){
         // get date
         let todayDate = date.getDate();
         // render the page provided arguments are todays date and the tasks
-        ejs.renderFile(pathList, {currentDate: todayDate, newItems: tasks}, function(err, data){
+        ejs.renderFile(pathList, {listTitle: todayDate, newItems: tasks}, function(err, data){
             res.send(data);
-        
+            if(err){
+                console.log(err.message);
+            }
         });
     })
     
@@ -64,21 +64,51 @@ async function main(){
 
     // Delete a task by id and render homepage again
     app.post("/del", async function(req, res){
-        await Task.deleteOne({_id: req.body.itemToDelete});
-        res.redirect("/");
+        const todayDate = date.getDate();
+        const listName = req.body.nameOfList;
+        // check if i should delete from the default list
+        if(listName === todayDate){
+            // if so delete from the task collection
+            await Task.deleteOne({_id: req.body.itemToDelete});
+            res.redirect("/")
+        } else{
+            // else get list to delete from and delete from the array by id
+            const listToDeleteFrom = await List.findOne({name: listName});
+            listToDeleteFrom.items.pull({_id: req.body.itemToDelete});
+            await listToDeleteFrom.save();
+            // redirect to the page we were posted from
+            res.redirect("/" + listName)
+        }
+        
 
     })
     
     // Add task to a list and render homepage again
     app.post("/", async function(req, res){
-        try {            
-            await Task.create({
-                toDo: req.body.newItem
-            });
-        } catch (err) {
-            console.log(err.message);
+        const todayDate = date.getDate();
+        const newItem = await new Task({
+            toDo: req.body.newItem
+        });
+        if(req.body.list === todayDate){
+            console.log("they are the same");
+            try {            
+                await newItem.save();
+            } catch (err) {
+                console.log(err.message);
+            } finally {
+                res.redirect("/");
+            }
+        } else{
+            try {
+                const listToAddTo = await List.findOne({name: req.body.list});
+                listToAddTo.items.push(newItem);
+                await listToAddTo.save();
+            } catch (error) {
+                console.log(error.message);
+            } finally{
+                res.redirect("/" + req.body.list);
+            }
         }
-        res.redirect("/");
     
     })
 
@@ -100,8 +130,8 @@ async function main(){
                 console.log(err.message);
             }
         }
-
-        ejs.renderFile(pathList, {currentDate: nameOfUserList, newItems: myList.items}, function(err, data){
+        
+        ejs.renderFile(pathList, {listTitle: nameOfUserList, newItems: myList.items}, function(err, data){
             res.send(data);
         
         });
@@ -111,6 +141,5 @@ async function main(){
     app.listen(3000, function(){
         console.log("Server running on port 3000");
     })
-
-}
+} 
 
