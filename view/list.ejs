@@ -1,7 +1,7 @@
 <%- include('header') -%>
 <body>
     <div class="box" id="heading">
-        <h1><%=currentDate%></h1>
+        <h1><%=listTitle%></h1>
     </div>
     <div class="box">
             <% newItems.forEach(el => { %>
@@ -11,12 +11,13 @@
                         <input type="checkbox" name="itemToDelete" value="<%=el._id%>" onChange="this.form.submit()">
                         <p><%= el.toDo  %> </p>
                     </div>
+                    <input type="hidden" name="nameOfList" value="<%=listTitle%>">
                 </form>
             <%})%>
             
         <form class="item" action="/" method="post">
             <input type="text" name="newItem" placeholder="New Item" autocomplete="off" autocapitalize="on">
-            <button type="submit">+</button>
+            <button type="submit" name="list" value="<%=listTitle%>">+</button>
         </form>
     </div>
 </body>
