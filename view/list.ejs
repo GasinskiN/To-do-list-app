@@ -7,6 +7,7 @@
             <% newItems.forEach(el => { %>
                 <form action="/del" method="post">
                     <div class="item">
+                        <!-- post to the /del path and provide the _id of the element we want to delete -->
                         <input type="checkbox" name="itemToDelete" value="<%=el._id%>" onChange="this.form.submit()">
                         <p><%= el.toDo  %> </p>
                     </div>
